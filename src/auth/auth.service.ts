@@ -27,7 +27,7 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
-    const payload = { sub: user.id, email: user.email };
-    return { access_token: this.jwtService.sign(payload) };
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    return { access_token: this.jwtService.sign(payload), user };
   }
 }

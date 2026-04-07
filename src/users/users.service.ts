@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entity';
+import { User, UserRole } from './user.entity';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -11,15 +11,19 @@ export class UsersService {
     private readonly repo: Repository<User>,
   ) {}
 
-  async create(email: string, password: string) {
+  async create(
+    email: string,
+    password: string,
+    role: UserRole = UserRole.USER,
+  ) {
     const hashed: string = await bcrypt.hash(password, 10);
-    const user = this.repo.create({ email, password: hashed });
+    const user = this.repo.create({ email, password: hashed, role });
     const savedUser = await this.repo.save(user);
 
-    // Create a new object explicitly without password
     return {
       id: savedUser.id,
       email: savedUser.email,
+      role: savedUser.role,
       createdAt: savedUser.createdAt,
       updatedAt: savedUser.updatedAt,
     };
