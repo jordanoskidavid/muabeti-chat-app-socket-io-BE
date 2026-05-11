@@ -3,7 +3,7 @@ const { io } = require('socket.io-client');
 const socket = io('http://localhost:3000', {
   auth: {
     token:
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoiam9yZGFub3NraS5kYXZpZEB1a2xvLmVkdS5tayIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzc4NTIzMDA2LCJleHAiOjE3Nzg1MjY2MDZ9.0Rby2HrSiWW-QfbB_9ZY-aLieBq_wvWkSRNi3_uRAKo',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsImVtYWlsIjoiaGRkYXZpZDY2NEBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc3ODUyMzA1NiwiZXhwIjoxNzc4NTI2NjU2fQ._YdkkjsTi694cp3v1RJ_ipMmoXlAn22OXCfnjxpnZm4',
   },
 });
 
@@ -12,7 +12,7 @@ socket.on('connect', () => {
 
   // send message after connect
   socket.emit('privateMessage', {
-    toUserId: 6, // change to another user id
+    toUserId: 5, // change to another user id
     message: 'Hello bro',
   });
 });

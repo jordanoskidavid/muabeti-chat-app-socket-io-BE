@@ -124,25 +124,33 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: unknown,
     @ConnectedSocket() client: Socket,
   ): void {
+    console.log('PRIVATE MESSAGE EVENT TRIGGERED');
+    console.log('DATA:', data);
     const socket = client as AuthenticatedSocket;
     const fromUser = getUser(socket);
+    console.log('FROM USER:', fromUser);
 
     if (!fromUser) return;
 
     if (!isValidMessageData(data)) {
+      console.log('INVALID MESSAGE DATA');
       socket.emit('error', { message: 'Invalid message format' });
       return;
     }
 
     const receiverSocketId = this.users.get(data.toUserId);
-
+    console.log('RECEIVER SOCKET:', receiverSocketId);
     if (receiverSocketId) {
+      console.log('SENDING MESSAGE');
+
       this.server.to(receiverSocketId).emit('receiveMessage', {
         from: fromUser.sub,
         message: data.message,
       });
       socket.emit('messageSent', { to: data.toUserId, message: data.message });
     } else {
+      console.log('USER NOT ONLINE');
+
       socket.emit('error', { message: `User ${data.toUserId} is not online` });
     }
   }
