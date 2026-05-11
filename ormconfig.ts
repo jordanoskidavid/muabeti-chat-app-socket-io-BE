@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
-import { User } from './src/users/user.entity'; // we’ll create this soon
+import { User } from './src/users/user.entity';
+import { Message } from './src/messages/message.entity';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -8,6 +9,6 @@ export const AppDataSource = new DataSource({
   username: 'root',
   password: 'root',
   database: 'muabeti_db',
-  entities: [User],
+  entities: [User, Message],
   migrations: ['src/migrations/*.ts'],
 });
