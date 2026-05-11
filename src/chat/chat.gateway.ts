@@ -9,6 +9,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import * as jwt from 'jsonwebtoken';
+import { MessagesService } from '../messages/messages.service';
+import { UsersService } from '../users/users.service';
 
 interface MyJwtPayload {
   sub: number;
@@ -68,6 +70,10 @@ function isValidMessageData(
   cors: { origin: '*' },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  constructor(
+    private readonly messagesService: MessagesService,
+    private readonly usersService: UsersService,
+  ) {}
   @WebSocketServer()
   server: Server<ClientToServerEvents, ServerToClientEvents>;
 
@@ -120,10 +126,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('privateMessage')
-  handlePrivateMessage(
+  @SubscribeMessage('privateMessage')
+  async handlePrivateMessage(
     @MessageBody() data: unknown,
     @ConnectedSocket() client: Socket,
-  ): void {
+  ): Promise<void> {
     console.log('PRIVATE MESSAGE EVENT TRIGGERED');
     console.log('DATA:', data);
     const socket = client as AuthenticatedSocket;
@@ -138,6 +145,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
+    const sender = await this.usersService.findByEmail(fromUser.email);
+    const receiver = await this.usersService.findById(data.toUserId);
+
+    if (!sender || !receiver) return;
+
+    await this.messagesService.create(sender, receiver, data.message);
     const receiverSocketId = this.users.get(data.toUserId);
     console.log('RECEIVER SOCKET:', receiverSocketId);
     if (receiverSocketId) {
