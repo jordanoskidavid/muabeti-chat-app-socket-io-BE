@@ -12,7 +12,18 @@ export class ConversationsService {
     @InjectRepository(ConversationParticipant)
     private readonly participantRepo: Repository<ConversationParticipant>,
   ) {}
+  async getConversationsForUser(userId: number) {
+    const participants = await this.participantRepo.find({
+      where: { userId },
+      relations: [
+        'conversation',
+        'conversation.participants',
+        'conversation.participants.user',
+      ],
+    });
 
+    return participants.map((p) => p.conversation);
+  }
   async findOrCreateDirectConversation(user1Id: number, user2Id: number) {
     if (user1Id === user2Id) {
       throw new BadRequestException(

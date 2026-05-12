@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ConversationsService } from './conversations.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { BadRequestException } from '@nestjs/common';
@@ -6,7 +6,6 @@ import { BadRequestException } from '@nestjs/common';
 @Controller('conversations')
 export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) {}
-
   @UseGuards(JwtAuthGuard)
   @Post('direct')
   async createDirectConversation(
@@ -25,5 +24,10 @@ export class ConversationsController {
       req.user.id,
       body.userId,
     );
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async getConversations(@Req() req: { user: { id: number } }) {
+    return this.conversationsService.getConversationsForUser(req.user.id);
   }
 }
