@@ -59,8 +59,10 @@ export class ConversationsService {
         uniqueUsers.includes(user1Id) &&
         uniqueUsers.includes(user2Id)
       ) {
-        return this.conversationRepo.findOneBy({
-          id: conversationId,
+        // ✅ Fix 1 — existing conversation
+        return this.conversationRepo.findOne({
+          where: { id: conversationId },
+          relations: ['participants', 'participants.user'],
         });
       }
     }
@@ -78,9 +80,11 @@ export class ConversationsService {
         { conversationId: conversation.id, userId: user2Id },
       ])
       .execute();
+
+    // ✅ Fix 2 — newly created conversation
     return this.conversationRepo.findOne({
       where: { id: conversation.id },
-      relations: ['participants'],
+      relations: ['participants', 'participants.user'],
     });
   }
 }
