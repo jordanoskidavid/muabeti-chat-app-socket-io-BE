@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
+
+import { ConversationParticipant } from './conversation-participant.entity';
 
 @Entity()
 export class Conversation {
@@ -7,4 +14,7 @@ export class Conversation {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @OneToMany(() => ConversationParticipant, (p) => p.conversation)
+  participants: ConversationParticipant[];
 }

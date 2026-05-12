@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Conversation } from './conversation.entity';
 import { In, Repository } from 'typeorm';
@@ -14,6 +14,11 @@ export class ConversationsService {
   ) {}
 
   async findOrCreateDirectConversation(user1Id: number, user2Id: number) {
+    if (user1Id === user2Id) {
+      throw new BadRequestException(
+        'Cannot create conversation with same user',
+      );
+    }
     const participants = await this.participantRepo.find({
       where: {
         user: {
@@ -62,6 +67,9 @@ export class ConversationsService {
         { conversationId: conversation.id, userId: user2Id },
       ])
       .execute();
-    return conversation;
+    return this.conversationRepo.findOne({
+      where: { id: conversation.id },
+      relations: ['participants'],
+    });
   }
 }
