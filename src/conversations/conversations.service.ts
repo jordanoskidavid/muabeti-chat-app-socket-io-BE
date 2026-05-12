@@ -12,6 +12,12 @@ export class ConversationsService {
     @InjectRepository(ConversationParticipant)
     private readonly participantRepo: Repository<ConversationParticipant>,
   ) {}
+  async getConversationById(conversationId: number) {
+    return this.conversationRepo.findOne({
+      where: { id: conversationId },
+      relations: ['participants', 'participants.user'],
+    });
+  }
   async getConversationsForUser(userId: number) {
     const participants = await this.participantRepo.find({
       where: { userId },

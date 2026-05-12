@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ConversationsService } from './conversations.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { BadRequestException } from '@nestjs/common';
@@ -29,5 +38,10 @@ export class ConversationsController {
   @Get()
   async getConversations(@Req() req: { user: { id: number } }) {
     return this.conversationsService.getConversationsForUser(req.user.id);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getConversation(@Param('id', ParseIntPipe) id: number) {
+    return this.conversationsService.getConversationById(id);
   }
 }
