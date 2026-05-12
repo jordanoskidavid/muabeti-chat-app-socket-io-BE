@@ -23,4 +23,17 @@ export class MessagesService {
 
     return this.repo.save(message);
   }
+  async findByConversation(conversationId: number) {
+    return this.repo.find({
+      where: {
+        conversation: {
+          id: conversationId,
+        },
+      },
+      relations: ['sender'],
+      order: {
+        createdAt: 'ASC',
+      },
+    });
+  }
 }

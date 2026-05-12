@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+} from 'typeorm';
 import { User } from '../users/user.entity';
 import { Conversation } from '../conversations/conversation.entity';
 
@@ -10,12 +16,12 @@ export class Message {
   @Column()
   content: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { eager: true })
   sender: User;
 
-  @ManyToOne(() => Conversation)
+  @ManyToOne(() => Conversation, { onDelete: 'CASCADE' })
   conversation: Conversation;
 
-  @Column()
+  @CreateDateColumn()
   createdAt: Date;
 }
