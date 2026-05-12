@@ -7,6 +7,9 @@ import { ChatGateway } from './chat/chat.gateway';
 import { ConfigModule } from '@nestjs/config';
 import { MessagesModule } from './messages/messages.module';
 import { Message } from './messages/message.entity';
+import { ConversationsModule } from './conversations/conversations.module';
+import { ConversationParticipant } from './conversations/conversation-participant.entity';
+import { Conversation } from './conversations/conversation.entity';
 
 @Module({
   imports: [
@@ -18,13 +21,14 @@ import { Message } from './messages/message.entity';
       username: 'root',
       password: 'root',
       database: 'muabeti_db',
-      entities: [User, Message],
+      entities: [User, Message, Conversation, ConversationParticipant],
       migrations: ['dist/migrations/*.js'],
       synchronize: false,
     }),
     UsersModule,
     AuthModule,
     MessagesModule,
+    ConversationsModule,
   ],
   providers: [ChatGateway],
 })
