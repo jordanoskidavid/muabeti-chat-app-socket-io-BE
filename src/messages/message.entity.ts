@@ -1,12 +1,6 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  CreateDateColumn,
-} from 'typeorm';
-
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { User } from '../users/user.entity';
+import { Conversation } from '../conversations/conversation.entity';
 
 @Entity()
 export class Message {
@@ -16,14 +10,12 @@ export class Message {
   @Column()
   content: string;
 
-  // sender
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne(() => User)
   sender: User;
 
-  // receiver
-  @ManyToOne(() => User, { eager: true })
-  receiver: User;
+  @ManyToOne(() => Conversation)
+  conversation: Conversation;
 
-  @CreateDateColumn()
+  @Column()
   createdAt: Date;
 }

@@ -24,12 +24,13 @@ interface SocketData {
 
 interface ServerToClientEvents {
   receiveMessage: (data: { from: number; message: string }) => void;
-  messageSent: (data: { to: number; message: string }) => void;
+  messageSent: (data: { conversationId: number; message: string }) => void;
   error: (data: { message: string }) => void;
 }
 
 interface ClientToServerEvents {
-  privateMessage: (data: { toUserId: number; message: string }) => void;
+  sendMessage: (data: { conversationId: number; message: string }) => void;
+  joinConversation: (data: { conversationId: number }) => void;
 }
 
 type AuthenticatedSocket = Socket<
@@ -46,23 +47,12 @@ function getUser(socket: AuthenticatedSocket): MyJwtPayload | undefined {
 function isValidPayload(decoded: unknown): decoded is MyJwtPayload {
   if (typeof decoded !== 'object' || decoded === null) return false;
   const d = decoded as Record<string, unknown>;
+
   return (
     typeof d.sub === 'number' &&
     typeof d.email === 'string' &&
     typeof d.role === 'string' &&
     (d.role === 'user' || d.role === 'admin')
-  );
-}
-
-function isValidMessageData(
-  data: unknown,
-): data is { toUserId: number; message: string } {
-  if (typeof data !== 'object' || data === null) return false;
-  const d = data as Record<string, unknown>;
-  return (
-    typeof d.toUserId === 'number' &&
-    typeof d.message === 'string' &&
-    d.message.trim().length > 0
   );
 }
 
@@ -74,20 +64,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly messagesService: MessagesService,
     private readonly usersService: UsersService,
   ) {}
+
   @WebSocketServer()
   server: Server<ClientToServerEvents, ServerToClientEvents>;
-
-  private users = new Map<number, string>();
-
-  private getJwtSecret(): string {
-    const secret = process.env.JWT_SECRET;
-
-    if (!secret) {
-      throw new Error('JWT_SECRET is not set');
-    }
-
-    return secret;
-  }
 
   handleConnection(client: Socket): void {
     const socket = client as AuthenticatedSocket;
@@ -99,7 +78,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     try {
-      const decoded: unknown = jwt.verify(token, this.getJwtSecret());
+      const decoded: unknown = jwt.verify(
+        token,
+        process.env.JWT_SECRET || 'secret',
+      );
 
       if (!isValidPayload(decoded)) {
         socket.disconnect();
@@ -107,10 +89,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       socket.data.user = decoded;
-      this.users.set(decoded.sub, socket.id);
+
       console.log('User connected:', decoded.email);
     } catch (err) {
-      console.error('JWT verification failed:', err);
+      console.error('JWT error:', err);
       socket.disconnect();
     }
   }
@@ -120,51 +102,60 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const user = getUser(socket);
 
     if (user) {
-      this.users.delete(user.sub);
       console.log('User disconnected:', user.email);
     }
   }
 
-  @SubscribeMessage('privateMessage')
-  @SubscribeMessage('privateMessage')
-  async handlePrivateMessage(
-    @MessageBody() data: unknown,
+  // 🟢 JOIN CONVERSATION ROOM
+  @SubscribeMessage('joinConversation')
+  handleJoinConversation(
+    @MessageBody() data: { conversationId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const room = `conversation_${data.conversationId}`;
+
+    client.join(room);
+
+    console.log(`User joined room: ${room}`);
+  }
+
+  // 🟢 SEND MESSAGE TO ROOM
+  @SubscribeMessage('sendMessage')
+  async handleSendMessage(
+    @MessageBody() data: { conversationId: number; message: string },
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    console.log('PRIVATE MESSAGE EVENT TRIGGERED');
-    console.log('DATA:', data);
     const socket = client as AuthenticatedSocket;
-    const fromUser = getUser(socket);
-    console.log('FROM USER:', fromUser);
+    const user = getUser(socket);
 
-    if (!fromUser) return;
+    if (!user) return;
 
-    if (!isValidMessageData(data)) {
-      console.log('INVALID MESSAGE DATA');
+    if (!data.message?.trim()) {
       socket.emit('error', { message: 'Invalid message format' });
       return;
     }
 
-    const sender = await this.usersService.findByEmail(fromUser.email);
-    const receiver = await this.usersService.findById(data.toUserId);
+    const sender = await this.usersService.findByEmail(user.email);
+    if (!sender) return;
 
-    if (!sender || !receiver) return;
+    // 💾 SAVE MESSAGE
+    await this.messagesService.create(
+      sender,
+      data.conversationId,
+      data.message,
+    );
 
-    await this.messagesService.create(sender, receiver, data.message);
-    const receiverSocketId = this.users.get(data.toUserId);
-    console.log('RECEIVER SOCKET:', receiverSocketId);
-    if (receiverSocketId) {
-      console.log('SENDING MESSAGE');
+    const room = `conversation_${data.conversationId}`;
 
-      this.server.to(receiverSocketId).emit('receiveMessage', {
-        from: fromUser.sub,
-        message: data.message,
-      });
-      socket.emit('messageSent', { to: data.toUserId, message: data.message });
-    } else {
-      console.log('USER NOT ONLINE');
+    // 📡 BROADCAST TO ROOM
+    this.server.to(room).emit('receiveMessage', {
+      from: user.sub,
+      message: data.message,
+    });
 
-      socket.emit('error', { message: `User ${data.toUserId} is not online` });
-    }
+    socket.emit('messageSent', {
+      conversationId: data.conversationId,
+      message: data.message,
+    });
   }
 }

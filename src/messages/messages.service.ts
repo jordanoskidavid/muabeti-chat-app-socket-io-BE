@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Message } from './message.entity';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { User } from '../users/user.entity';
+import { Conversation } from '../conversations/conversation.entity';
 
 @Injectable()
 export class MessagesService {
@@ -11,15 +12,13 @@ export class MessagesService {
     private readonly repo: Repository<Message>,
   ) {}
 
-  async create(
-    sender: User,
-    receiver: User,
-    content: string,
-  ): Promise<Message> {
+  async create(sender: User, conversationId: number, content: string) {
     const message = this.repo.create({
       sender,
-      receiver,
       content,
+      conversation: {
+        id: conversationId,
+      } as DeepPartial<Conversation>,
     });
 
     return this.repo.save(message);
