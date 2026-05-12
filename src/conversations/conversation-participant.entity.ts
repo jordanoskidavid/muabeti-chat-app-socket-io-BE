@@ -1,5 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
-
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  Column,
+} from 'typeorm';
 import { Conversation } from './conversation.entity';
 import { User } from '../users/user.entity';
 
@@ -8,12 +13,17 @@ export class ConversationParticipant {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Conversation)
-  conversation: Conversation;
-
-  @ManyToOne(() => User)
-  user: User;
+  @Column()
+  conversationId: number;
 
   @Column()
   userId: number;
+
+  @ManyToOne(() => Conversation)
+  @JoinColumn({ name: 'conversationId' })
+  conversation: Conversation;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 }
