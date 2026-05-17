@@ -44,4 +44,16 @@ export class ConversationsController {
   async getConversation(@Param('id', ParseIntPipe) id: number) {
     return this.conversationsService.getConversationById(id);
   }
+  @UseGuards(JwtAuthGuard)
+  @Post('group')
+  async createGroupConversation(
+    @Req() req: { user: { id: number } },
+    @Body() body: { name: string; userIds: number[] },
+  ) {
+    const allUserIds = [...new Set([req.user.id, ...body.userIds])];
+    return this.conversationsService.createGroupConversation(
+      body.name,
+      allUserIds,
+    );
+  }
 }

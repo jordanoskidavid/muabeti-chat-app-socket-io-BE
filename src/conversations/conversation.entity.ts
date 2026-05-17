@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   OneToMany,
+  Column,
 } from 'typeorm';
 
 import { ConversationParticipant } from './conversation-participant.entity';
@@ -11,7 +12,11 @@ import { ConversationParticipant } from './conversation-participant.entity';
 export class Conversation {
   @PrimaryGeneratedColumn()
   id: number;
+  @Column({ nullable: true })
+  name: string;
 
+  @Column({ default: false })
+  isGroup: boolean;
   @CreateDateColumn()
   createdAt: Date;
 

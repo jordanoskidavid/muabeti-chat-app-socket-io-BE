@@ -30,6 +30,25 @@ export class ConversationsService {
 
     return participants.map((p) => p.conversation);
   }
+  async createGroupConversation(name: string, userIds: number[]) {
+    const conversation = await this.conversationRepo.save(
+      this.conversationRepo.create({ name, isGroup: true }),
+    );
+
+    await this.participantRepo
+      .createQueryBuilder()
+      .insert()
+      .into(ConversationParticipant)
+      .values(
+        userIds.map((userId) => ({ conversationId: conversation.id, userId })),
+      )
+      .execute();
+
+    return this.conversationRepo.findOne({
+      where: { id: conversation.id },
+      relations: ['participants', 'participants.user'],
+    });
+  }
   async findOrCreateDirectConversation(user1Id: number, user2Id: number) {
     if (user1Id === user2Id) {
       throw new BadRequestException(
