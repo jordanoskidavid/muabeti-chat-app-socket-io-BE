@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from './user.entity';
 import bcrypt from 'bcryptjs';
@@ -34,5 +34,11 @@ export class UsersService {
   }
   async findById(id: number) {
     return this.repo.findOneBy({ id });
+  }
+  async searchByEmail(email: string) {
+    return this.repo.find({
+      where: { email: Like(`%${email}%`) },
+      select: ['id', 'email'],
+    });
   }
 }
