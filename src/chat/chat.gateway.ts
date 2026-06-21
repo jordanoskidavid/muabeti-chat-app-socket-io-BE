@@ -106,7 +106,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  // 🟢 JOIN CONVERSATION ROOM
+  // JOIN CONVERSATION ROOM
   @SubscribeMessage('joinConversation')
   handleJoinConversation(
     @MessageBody() data: { conversationId: number },
@@ -119,7 +119,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`User joined room: ${room}`);
   }
 
-  // 🟢 SEND MESSAGE TO ROOM
+  // SEND MESSAGE TO ROOM
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @MessageBody() data: { conversationId: number; message: string },
@@ -138,7 +138,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const sender = await this.usersService.findByEmail(user.email);
     if (!sender) return;
 
-    // 💾 SAVE MESSAGE
+    // SAVE MESSAGE
     await this.messagesService.create(
       sender,
       data.conversationId,
@@ -147,7 +147,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const room = `conversation_${data.conversationId}`;
 
-    // 📡 BROADCAST TO ROOM
+    // BROADCAST TO ROOM
     this.server.to(room).emit('receiveMessage', {
       from: user.sub,
       message: data.message,
